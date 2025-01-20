@@ -661,7 +661,7 @@ namespace BIMLOG2025
                 var checkSketch = elem.get_Parameter(BuiltInParameter.ELEM_CATEGORY_PARAM).AsElementId();
                 // 이거임!!
                 Category checkCategory = Category.GetCategory(doc, checkSketch);
-                ㅈDebug.WriteLine(checkCategory.Name);
+                Debug.WriteLine(checkCategory.Name);
                 // 여기에 null이면 안됨 유의!!!
                 //  ex wall opening
                 if (checkCategory.Name == "<Sketch>")
