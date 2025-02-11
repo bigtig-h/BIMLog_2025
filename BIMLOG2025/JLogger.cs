@@ -455,62 +455,62 @@ namespace BIMLOG2025
             // 이정헌 24.5.17.
             UndoOperation operationType = args.Operation;
             #region undoOperation
-            if (operationType == UndoOperation.TransactionUndone)
-            {
-                var timestamp = DateTime.Now.ToString();
-                JObject addJarray = new JObject(new JProperty("Undone", new JObject()));
-                JObject undoTime = (JObject)addJarray["Undone"];
-                undoTime.Add("UndoneTime", timestamp);
+            //if (operationType == UndoOperation.TransactionUndone)
+            //{
+            //    var timestamp = DateTime.Now.ToString();
+            //    JObject addJarray = new JObject(new JProperty("Undone", new JObject()));
+            //    JObject undoTime = (JObject)addJarray["Undone"];
+            //    undoTime.Add("UndoneTime", timestamp);
 
-                if (addJarray != null)
-                {
-                    File.WriteAllText(JsonFile, String.Empty);
-                    using (var streamWriter = new StreamWriter(JsonFile, true))
-                    {
-                        using (var writer = new JsonTextWriter(streamWriter))
-                        {
-                            JObject o = (JObject)JToken.FromObject(addJarray);
-                            jarray.Add(o);
-                            JArray JLog = (JArray)jobject["bimlog"]["Log"];
-                            JLog.Merge(jarray, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union });
-                            var json = new JObject();
-                            var serializer = new JsonSerializer();
-                            serializer.Formatting = Formatting.Indented;
-                            serializer.Serialize(writer, jobject);
-                        }
-                    }
-                }
-                return;
-            }
-            else if (operationType == UndoOperation.TransactionRedone)
-            {
-                var timestamp = DateTime.Now.ToString();
-                JObject addJarray = new JObject(new JProperty("Redone", new JObject()));
-                JObject undoTime = (JObject)addJarray["Redone"];
-                undoTime.Add("RedoneTime", timestamp);
-                JArray jLog = (JArray)jobject["bimlog"]["Log"];
-                JToken test = jLog.Last;
-                Debug.WriteLine(test);
-                if (addJarray != null)
-                {
-                    File.WriteAllText(JsonFile, String.Empty);
-                    using (var streamWriter = new StreamWriter(JsonFile, true))
-                    {
-                        using (var writer = new JsonTextWriter(streamWriter))
-                        {
-                            JObject o = (JObject)JToken.FromObject(addJarray);
-                            jarray.Add(o);
-                            JArray JLog = (JArray)jobject["bimlog"]["Log"];
-                            JLog.Merge(jarray, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union });
-                            var json = new JObject();
-                            var serializer = new JsonSerializer();
-                            serializer.Formatting = Formatting.Indented;
-                            serializer.Serialize(writer, jobject);
-                        }
-                    }
-                }
-                return;
-            }
+            //    if (addJarray != null)
+            //    {
+            //        File.WriteAllText(JsonFile, String.Empty);
+            //        using (var streamWriter = new StreamWriter(JsonFile, true))
+            //        {
+            //            using (var writer = new JsonTextWriter(streamWriter))
+            //            {
+            //                JObject o = (JObject)JToken.FromObject(addJarray);
+            //                jarray.Add(o);
+            //                JArray JLog = (JArray)jobject["bimlog"]["Log"];
+            //                JLog.Merge(jarray, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union });
+            //                var json = new JObject();
+            //                var serializer = new JsonSerializer();
+            //                serializer.Formatting = Formatting.Indented;
+            //                serializer.Serialize(writer, jobject);
+            //            }
+            //        }
+            //    }
+            //    return;
+            //}
+            //else if (operationType == UndoOperation.TransactionRedone)
+            //{
+            //    var timestamp = DateTime.Now.ToString();
+            //    JObject addJarray = new JObject(new JProperty("Redone", new JObject()));
+            //    JObject undoTime = (JObject)addJarray["Redone"];
+            //    undoTime.Add("RedoneTime", timestamp);
+            //    JArray jLog = (JArray)jobject["bimlog"]["Log"];
+            //    JToken test = jLog.Last;
+            //    Debug.WriteLine(test);
+            //    if (addJarray != null)
+            //    {
+            //        File.WriteAllText(JsonFile, String.Empty);
+            //        using (var streamWriter = new StreamWriter(JsonFile, true))
+            //        {
+            //            using (var writer = new JsonTextWriter(streamWriter))
+            //            {
+            //                JObject o = (JObject)JToken.FromObject(addJarray);
+            //                jarray.Add(o);
+            //                JArray JLog = (JArray)jobject["bimlog"]["Log"];
+            //                JLog.Merge(jarray, new JsonMergeSettings { MergeArrayHandling = MergeArrayHandling.Union });
+            //                var json = new JObject();
+            //                var serializer = new JsonSerializer();
+            //                serializer.Formatting = Formatting.Indented;
+            //                serializer.Serialize(writer, jobject);
+            //            }
+            //        }
+            //    }
+            //    return;
+            //}
             #endregion
 
             Selection sel = uidoc.Selection;
@@ -530,12 +530,20 @@ namespace BIMLOG2025
                     Debug.WriteLine("Modified Element:  " + elem);
                     try
                     {
-                        if (selectedIds.Contains(eid) || selectedElementList.Contains(eid) || addedElementList.Contains(eid) || addedStairList.Contains(eid))
+                        // 25.2.5. 수정
+                        // dependent한 객체들 불러오기
+
+                        var e = elem.GetDependentElements(null);
+                        // 25.2.11. selected 된 객체된 기록하는 알고리즘 삭제
+                        if (addedElementList.Contains(eid) || addedStairList.Contains(eid))
+                        //if (selectedIds.Contains(eid) || selectedElementList.Contains(eid) || addedElementList.Contains(eid) || addedStairList.Contains(eid))
                         // 선택된 객체랑 다른 객체가 수정되는 경우가 존재.
                         // 예를들어 profile로 형상을 표현하는 객체들.
                         {
-                            if (doc.GetElement(eid) == null || doc.GetElement(doc.GetElement(eid).GetTypeId()) == null)
-                                continue;
+                            if (elem.Category.BuiltInCategory.ToString() != "OST_Rooms")
+                                if (doc.GetElement(eid) == null || doc.GetElement(doc.GetElement(eid).GetTypeId()) == null)
+                                    //if (doc.GetElement(eid) == null)
+                                    continue;
                             dynamic logdata = Log(doc, cmd, eid);
                             //JSON
                             // 24.3.18. 수정
@@ -575,8 +583,9 @@ namespace BIMLOG2025
 
                     try
                     {
-                        if (doc.GetElement(eid) == null || doc.GetElement(doc.GetElement(eid).GetTypeId()) == null)
-                            continue;
+                        if (elem.Category.BuiltInCategory.ToString() != "OST_Rooms")
+                            if (doc.GetElement(eid) == null || doc.GetElement(doc.GetElement(eid).GetTypeId()) == null)
+                                continue;
                         // 24.7.1. 수정
                         // AMM 객체 
                         if (!CheckAddedElement(eid, sender))
@@ -657,18 +666,22 @@ namespace BIMLOG2025
                 var checkSketch = elem.get_Parameter(BuiltInParameter.ELEM_CATEGORY_PARAM).AsElementId();
                 // 이거임!!
                 Category checkCategory = Category.GetCategory(doc, checkSketch);
-                Debug.WriteLine(checkCategory.Name);
-                // 여기에 null이면 안됨 유의!!!
-                //  ex wall opening
-                if (checkCategory.Name == "<Sketch>")
+                if (checkCategory != null)
                 {
-                    Debug.WriteLine("SketchElement");
-                    continue;
-                }
-                else
-                {
-                    selectedElementList.Clear();
-                    selectedElementList.Add(eId);
+
+                    Debug.WriteLine(checkCategory.Name);
+                    // 여기에 null이면 안됨 유의!!!
+                    //  ex wall opening
+                    if (checkCategory.Name == "<Sketch>")
+                    {
+                        Debug.WriteLine("SketchElement");
+                        continue;
+                    }
+                    else
+                    {
+                        selectedElementList.Clear();
+                        selectedElementList.Add(eId);
+                    }
                 }
             }
         }
@@ -1311,6 +1324,57 @@ namespace BIMLOG2025
                             JObject levelGeometry = (JObject)addJarray["Geometry"];
                             levelGeometry.Add("Elevation", levelElevation);
                             return addJarray;
+
+                        case "OST_Rooms":
+                            // 25.2.3. room 수정
+
+                            var room = elem;
+                            var roomGeo = elem as SpatialElement;
+                            var roomCurve = new JObject();
+                            var roomCurveArray = new JArray();
+                            // geometry
+                            JObject roomGeometry = (JObject)addJarray["Geometry"];
+
+                            if (roomGeo.Area != 0)
+                            {
+                                JArray roomBoundaryWalls = [];
+                                SpatialElementBoundaryOptions opt = new SpatialElementBoundaryOptions();
+                                opt.SpatialElementBoundaryLocation = SpatialElementBoundaryLocation.Center;
+                                IList<IList<BoundarySegment>> boundaryIList = roomGeo.GetBoundarySegments(opt);
+                                IList<BoundarySegment> list = boundaryIList[0];
+                                foreach (BoundarySegment bs in list)
+                                {
+                                    Curve roomCrv = bs.GetCurve();
+                                    roomCurve = GetCurveDescription(roomCrv);
+                                    roomCurveArray.Add(roomCurve);
+                                    var wallId = bs.ElementId.ToString();
+                                    
+                                    roomBoundaryWalls.Add(wallId);
+                                }
+                                roomGeometry.Add("BoundaryCurves", roomCurveArray);
+                                roomGeometry.Add("BoundaryWalls", roomBoundaryWalls);
+                                var roomLevel = doc.GetElement(roomGeo.LevelId).Name;
+                                roomGeometry.Add("Level", roomLevel);
+                            }
+
+                            // property
+                            // name & number of the room
+                            JObject roomProperty = (JObject)addJarray["Property"];
+                            roomProperty.Add("Name", room.Name);
+                            roomProperty.Add("Number", roomGeo.Number);
+                            roomProperty.Add("Area", roomGeo.Area);
+
+                            // parameter
+                            var roomParameters = room.Parameters;
+                            foreach (Parameter p in roomParameters)
+                            {
+                                GetParameter(p, addJarray);
+                            }
+
+
+
+                            return addJarray;
+
 
                         case "OST_Grids":
 
